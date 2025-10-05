@@ -1,0 +1,39 @@
+// This function will run automatically every time the form is submitted.
+
+function sendWelcomeEmail(e) {
+  // Get the form response object.
+  var formResponse = e.namedValues;
+
+  // Get the respondent's name and email from the questions in your form.
+  // IMPORTANT: The text inside the brackets MUST EXACTLY match your question titles.
+  var recipientName = formResponse['Full Name'][0];
+  var recipientEmail = formResponse['Email Address'][0];
+
+  // Get the first name for a more personal greeting.
+  var firstName = recipientName.split(' ')[0];
+
+  // Define the email subject and body.
+  var subject = "Welcome to the AERA SIG93 Graduate Student Network!";
+
+  // Use HTML for better formatting (like bold text and links).
+  var body = `
+    <p>Hi ${firstName},</p>
+    <p>Thank you for signing up for the AERA SIG93 Graduate Student Network! We are thrilled to have you join our community.</p>
+    <p>My name is Yongjin Lee, and I'm the SIG93 Graduate Representative. Our goal with this network is to create a vibrant space for connection, collaboration, and mutual support.</p>
+    <p><b>What's next?</b></p>
+    <p>You are now officially on our mailing list. Please keep an eye on your inbox for an announcement about our first online meetup, which will be scheduled right after the next SIG93 webinar. We'll be sending out the date and Zoom link soon.</p>
+    <p>In the meantime, feel free to visit the official <a href="https://www.aera.net/SIG093/Research-on-K-12-Physical-Education">AERA SIG93 website</a> to learn more about our work.</p>
+    <p>We look forward to connecting with you!</p>
+    <p>Sincerely,<br>
+    <b><a href="https://yongjin-l.github.io/">Yongjin Lee</a></b><br>
+    AERA SIG93 Graduate Representative<br>
+    y_lee10@uncg.edu<br>
+    Doctoral Student, The University of North Carolina at Greensboro</p>
+  `;
+
+  // Send the email.
+  GmailApp.sendEmail(recipientEmail, subject, "", {
+    htmlBody: body,
+    name: "Yongjin Lee (AERA SIG93)" // This sets the "from" name in the email.
+  });
+}
