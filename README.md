@@ -19,6 +19,8 @@ Currently, the repository contains the following Apps Script examples:
 *   **Automated Presentation Analysis with Google Apps Script**
     This topic holds two Apps scripts: CodeforSlide and CodeforSheet.
     For more details, please find this link. https://medium.com/@yongjinL/automated-presentation-analysis-with-google-apps-script-58cd1a91e93b
+*   **Turn Student Feedback into Actionable Insights with AI**
+    This topic include Automation in Sheet. Please find this link to use this script. https://medium.com/@yongjinL/automation-turn-student-feedback-into-actionable-insights-with-ai-40831d747db4
 
 ## Intended Use & Target Audience
 
