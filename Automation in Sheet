@@ -1,0 +1,97 @@
+const API_KEY = "PASTE_YOUR_API_KEY_HERE"; // <--- Put your key here
+
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('AI Reflection')
+    .addItem('Generate Reflection for Selected Row', 'generateReflection')
+    .addToUi();
+}
+
+function generateReflection() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const respSheet = ss.getSheetByName("Response");
+  const reflSheet = ss.getSheetByName("Reflection");
+  
+  const activeCell = reflSheet.getActiveCell();
+  const rowIndex = activeCell.getRow();
+  
+  // 1. Get the date from Column A of the selected row
+  const targetDateValue = reflSheet.getRange(rowIndex, 1).getValue();
+  
+  if (!targetDateValue || !(targetDateValue instanceof Date)) {
+    SpreadsheetApp.getUi().alert("Error: Please click on a cell in a row that has a valid date in Column A.");
+    return;
+  }
+  
+  // Format the target date to "yyyy-MM-dd" for a clean comparison
+  const targetDateString = Utilities.formatDate(targetDateValue, ss.getSpreadsheetTimeZone(), "yyyy-MM-dd");
+
+  // 2. Get the prompt from C1
+  const systemPrompt = reflSheet.getRange("C1").getValue();
+  if (!systemPrompt) {
+    SpreadsheetApp.getUi().alert("Error: Please write your AI prompt in cell C1.");
+    return;
+  }
+
+  // Show a "Processing" message in the cell
+  reflSheet.getRange(rowIndex, 2).setValue("AI is thinking... ⏳");
+  SpreadsheetApp.flush(); 
+
+  // 3. Collect student responses for that date
+  const respData = respSheet.getDataRange().getValues();
+  let filteredResponses = [];
+
+  for (let i = 1; i < respData.length; i++) {
+    let timestamp = respData[i][0]; // Column A: 2/9/2026 11:20:07
+    
+    if (timestamp instanceof Date) {
+      // Convert timestamp to same "yyyy-MM-dd" format to ignore the 11:20:07 part
+      let rowDateString = Utilities.formatDate(timestamp, ss.getSpreadsheetTimeZone(), "yyyy-MM-dd");
+      
+      if (rowDateString === targetDateString) {
+        let name = respData[i][1]; // Column B
+        let answer = respData[i][2]; // Column C
+        filteredResponses.push(`Student: ${name} | Answer: ${answer}`);
+      }
+    }
+  }
+
+  if (filteredResponses.length === 0) {
+    reflSheet.getRange(rowIndex, 2).setValue("No responses found for this date.");
+    return;
+  }
+
+  const combinedResponses = filteredResponses.join("\n");
+  const fullPrompt = `${systemPrompt}\n\nStudent Responses from ${targetDateString}:\n${combinedResponses}`;
+
+  // 4. Call Gemini AI
+  try {
+    const aiResponse = callGemini(fullPrompt);
+    // 5. Write to Column B
+    reflSheet.getRange(rowIndex, 2).setValue(aiResponse);
+  } catch (err) {
+    reflSheet.getRange(rowIndex, 2).setValue("Error: " + err.toString());
+  }
+}
+
+function callGemini(prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+  const payload = {
+    "contents": [{ "parts": [{ "text": prompt }] }]
+  };
+  const options = {
+    "method": "post",
+    "contentType": "application/json",
+    "payload": JSON.stringify(payload),
+    "muteHttpExceptions": true
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const json = JSON.parse(response.getContentText());
+  
+  if (json.candidates && json.candidates[0].content.parts[0].text) {
+    return json.candidates[0].content.parts[0].text;
+  } else {
+    return "AI Error: " + JSON.stringify(json);
+  }
+}
