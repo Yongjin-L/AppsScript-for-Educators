@@ -1,0 +1,37 @@
+/**
+ * Uses Gemini AI to process a prompt and reference data.
+ *
+ * @param {string} prompt The instruction for the AI.
+ * @param {string|Array} reference The data to process (cell or range).
+ * @return {string} The AI generated response.
+ * @customfunction
+ */
+function API(prompt, reference) {
+  const apiKey = "YOUR_API_KEY_HERE"; // <--- Paste your key here
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+
+  // Convert reference to string if it's a range/array
+  const data = Array.isArray(reference) ? reference.flat().join(", ") : reference;
+  
+  const payload = {
+    "contents": [{
+      "parts": [{
+        "text": prompt + "\n\nReference data: " + data
+      }]
+    }]
+  };
+
+  const options = {
+    "method": "post",
+    "contentType": "application/json",
+    "payload": JSON.stringify(payload)
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const json = JSON.parse(response.getContentText());
+    return json.candidates[0].content.parts[0].text;
+  } catch (e) {
+    return "Error: " + e.toString();
+  }
+}
